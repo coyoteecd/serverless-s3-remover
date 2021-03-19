@@ -26,8 +26,9 @@ class Remover {
     };
 
     this.hooks = {
-      'before:remove:remove': () => Promise.resolve().then(this.remove.bind(this)),
-      's3remove:remove': () => Promise.resolve().then(this.remove.bind(this))
+      'before:deploy:deploy': () => Promise.resolve().then(this.remove.bind(this, true)),
+      'before:remove:remove': () => Promise.resolve().then(this.remove.bind(this, false)),
+      's3remove:remove': () => Promise.resolve().then(this.remove.bind(this, false))
     };
   }
 
@@ -37,7 +38,7 @@ class Remover {
     }
   }
 
-  remove() {
+  remove(isDeploying) {
     const self = this;
 
     const getAllKeys = (bucket) => {
@@ -98,6 +99,7 @@ class Remover {
           const defaultConfig = {
             prompt: false,
             buckets: [],
+            bucketsToEmptyOnDeploy: []
           };
           return Object.assign({}, defaultConfig, fileConfig);
         });
@@ -105,9 +107,13 @@ class Remover {
 
     return new Promise((resolve) => {
       return populateConfig().then(config => {
+        const bucketsToEmpty = isDeploying ? 
+          config.bucketsToEmptyOnDeploy : 
+          config.buckets.concat(config.bucketsToEmptyOnDeploy);
+
         if (!config.prompt) {
           let promisses = [];
-          for (const b of config.buckets) {
+          for (const b of bucketsToEmpty) {
             promisses.push(getAllKeys(b).then(executeRemove).then(() => {
               const message = `Success: ${b} is empty.`;
               self.log(message);
@@ -125,7 +131,7 @@ class Remover {
         prompt.delimiter = '';
         prompt.start();
         const schema = {properties: {}};
-        config.buckets.forEach((b) => {
+        bucketsToEmpty.forEach((b) => {
           schema.properties[b] = {
             message: `Make ${b} empty. Are you sure? [yes/no]:`,
             validator: /(yes|no)/,
@@ -135,7 +141,7 @@ class Remover {
         });
         prompt.get(schema, (err, result) => {
           let promisses = [];
-          for (const b of config.buckets) {
+          for (const b of bucketsToEmpty) {
             if (result[b].match(/^y/)) {
               promisses.push(getAllKeys(b).then(executeRemove).then(() => {
                 const message = `Success: ${b} is empty.`;

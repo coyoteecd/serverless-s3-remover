@@ -1,7 +1,7 @@
 [![NPM](https://nodei.co/npm/serverless-s3-remover.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/serverless-s3-remover/)
 [![NPM](https://nodei.co/npm-dl/serverless-s3-remover.png?height=2)](https://nodei.co/npm/serverless-s3-remover/)
 # serverless-s3-remover
-plugin for serverless to make buckets empty before remove
+plugin for serverless to make buckets empty before removing or deploying a stack
 
 # Usage
 Run next command.
@@ -19,6 +19,8 @@ custom:
      buckets:
        - my-bucket-1
        - my-bucket-2
+    bucketsToEmptyOnDeploy:
+      - old-bucket-no-longer-in-stack # empties this bucket on next `serverless deploy`
 ```
 
 You can specify any number of `bucket`s that you want.
@@ -29,10 +31,14 @@ $ sls s3remove
 ```
 
 # When removing
-When removing serverless stack, this plugin automatically make buckets empty  before removing stack.
+When removing serverless stack, this plugin automatically empties buckets before removing the stack.
 ```sh
 $ sls remove
 ```
+
+# When deploying
+When deploying a serverless stack, this plugin automatically empties buckets listed under `bucketsToEmptyOnDeploy` before deploying the stack.
+Useful when renaming a bucket, because the deploy will try to delete the bucket with the old name.
 
 # Using Prompt
 You can use prompt before deleting bucket.
