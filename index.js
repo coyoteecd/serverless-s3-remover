@@ -96,12 +96,13 @@ class Remover {
     const populateConfig = () => {
       return this.serverless.variables.populateObject(this.serverless.service.custom.remover)
         .then(fileConfig => {
-          const defaultConfig = {
-            prompt: false,
-            buckets: [],
-            bucketsToEmptyOnDeploy: []
-          };
-          return Object.assign({}, defaultConfig, fileConfig);
+
+          // set defaults where not specified
+          fileConfig.prompt = fileConfig.prompt || false;
+          fileConfig.buckets = fileConfig.buckets || [];
+          fileConfig.bucketsToEmptyOnDeploy = fileConfig.bucketsToEmptyOnDeploy || [];
+          
+          return fileConfig;
         });
     };
 
